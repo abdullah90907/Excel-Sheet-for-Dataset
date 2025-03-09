@@ -1,4 +1,3 @@
-```markdown
 # Excel Sheet for Dataset
 
 This repository provides a complete guide for preparing an Excel sheet from your image dataset. It details every step from renaming images to generating a CSV file with image attributes and converting that CSV file into an Excel sheet.
@@ -183,5 +182,3 @@ The resulting Excel file will have columns:
   - **Color Pattern:** 1 (Striped), 0 (Spotted), -1 (Plain)
   - **Size:** 1 (Large), 0 (Medium), -1 (Small)
   - **Habitat:** 1 (Forests), 0 (Grasslands), -1 (Savannah)
-- Ensure that file paths in the scripts match your local environment.
-- The custom header row in the CSV file places "Image Attributes" above the attribute columns.
