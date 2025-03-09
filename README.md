@@ -1,124 +1,187 @@
-# Dataset Utility Tools
+```markdown
+# Excel Sheet for Dataset
 
-This repository contains utility tools to help with dataset preparation and management for machine learning projects.
+This repository provides a complete guide for preparing an Excel sheet from your image dataset. It details every step from renaming images to generating a CSV file with image attributes and converting that CSV file into an Excel sheet.
 
-## Setup
+---
 
-```bash
-# Create a virtual environment (recommended)
-python -m venv venv
+## Table of Contents
+- [Prerequisites](#prerequisites)
+- [Folder Structure](#folder-structure)
+- [Step 1: Renaming Images](#step-1-renaming-images)
+- [Step 2: Generating CSV with Attributes](#step-2-generating-csv-with-attributes)
+- [Step 3: Converting CSV to Excel](#step-3-converting-csv-to-excel)
+- [CSV & Excel Format](#csv--excel-format)
+- [Notes](#notes)
+- [Conclusion](#conclusion)
 
-# Activate the virtual environment
-# On Windows:
- venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
+---
 
-# Install the required dependencies
-pip install -r requirements.txt
+## Prerequisites
+
+- **Python 3.x**
+- **Pandas Library**  
+  Install using:
+  ```bash
+  pip install pandas
+  ```
+
+---
+
+## Folder Structure
+
+Ensure your repository follows a similar structure:
+
+```
+.
+├── animals
+│   ├── Cheetah
+│   │   ├── cheetah-01.jpg
+│   │   └── cheetah-02.jpg
+│   ├── Leopard
+│   ├── Lion
+│   ├── Tiger
+│   └── Jaguar
+├── rename_images.py
+├── generate_csv.py
+└── csv_to_excel.py
 ```
 
-## Available Tools
+---
 
-### 1. Image Renaming Tool (`rename.py`)
+## Step 1: Renaming Images
 
-This tool allows you to batch rename image files in a folder with a consistent naming pattern.
+Run the `rename_images.py` script to consistently rename your images for each animal category.
 
-#### Usage:
-
+For example, to rename images in the **Cheetah** folder, execute:
 ```bash
-python rename.py /path/to/images/folder --name custom-name
+python rename_images.py --folder "animals/Cheetah" --name "cheetah"
+```
+Repeat the command for other categories (e.g., Lion, Tiger) by updating the folder path and base name.
+
+---
+
+## Step 2: Generating CSV with Attributes
+
+This step creates a CSV file that includes the following columns:
+- **Image_Name**
+- **Image_Category**
+- **Image_Category_No**
+- **Attributes:** Speed, Color Pattern, Size, Habitat
+
+The attribute values are encoded as follows:
+- **Speed:** 1 = Fast, 0 = Medium, -1 = Slow  
+- **Color Pattern:** 1 = Striped, 0 = Spotted, -1 = Plain  
+- **Size:** 1 = Large, 0 = Medium, -1 = Small  
+- **Habitat:** 1 = Forests, 0 = Grasslands, -1 = Savannah  
+
+Below is an example implementation for `generate_csv.py`:
+
+```python
+import os
+import pandas as pd
+
+# Define the main folder path where animal category folders are stored
+folder_path = "C:/Users/mrabd/Downloads/Compressed/image-processing-toolkit-main/image-processing-toolkit-main/animals/Animals"
+
+# Define categories and their attributes in the format:
+# [Category Number, Speed, Color Pattern, Size, Habitat]
+animal_attributes = {
+    "Cheetah":  [1, 1, 0, -1, 0],
+    "Leopard":  [2, 1, 0, 0, 1],
+    "Lion":     [3, 0, -1, 1, -1],
+    "Tiger":    [4, 0, 1, 1, 1],
+    "Jaguar":   [5, 1, 0, 0, 1]
+}
+
+data = []
+for category, attributes in animal_attributes.items():
+    category_no = attributes[0]
+    category_path = os.path.join(folder_path, category)
+    if os.path.exists(category_path):
+        images = sorted([img for img in os.listdir(category_path) if img.endswith((".jpg", ".png", ".jpeg"))])
+        for image in images:
+            # Append: [Image_Name, Image_Category, Image_Category_No, Speed, Color Pattern, Size, Habitat]
+            data.append([image, category, category_no] + attributes[1:])
+
+# Define column names
+columns = ["Image_Name", "Image_Category", "Image_Category_No", "Speed", "Color_Pattern", "Size", "Habitat"]
+
+# Create DataFrame
+df = pd.DataFrame(data, columns=columns)
+
+# Create a custom header row for image attributes
+header_row = ["", "", "Image Attributes", "Speed", "Color Pattern", "Size", "Habitat"]
+
+# Save DataFrame to CSV without header, then insert the custom header row manually
+csv_file = "dataset_with_attributes.csv"
+df.to_csv(csv_file, index=False, header=False)
+
+with open(csv_file, "r") as f:
+    lines = f.readlines()
+
+lines.insert(0, ",".join(header_row) + "\n")
+
+with open(csv_file, "w") as f:
+    f.writelines(lines)
+
+print("CSV file created: dataset_with_attributes.csv")
 ```
 
-#### Parameters:
+---
 
-- `folder`: Path to the folder containing images
-- `--name` or `-n`: Base name for renamed images (default: "image")
+## Step 3: Converting CSV to Excel
 
-#### Example:
+Convert the generated CSV file into an Excel file by running the `csv_to_excel.py` script. Use the code below:
 
-```bash
-# Rename all images in the 'dog_photos' folder to 'dog-01.jpg', 'dog-02.jpg', etc.
-python rename.py ./dog_photos --name dog
+```python
+import pandas as pd
+
+# Update the CSV file path if necessary
+csv_file = "dataset_with_attributes.csv"
+# Read CSV file; use header=1 so that the second row is treated as the column names
+df = pd.read_csv(csv_file, header=1)
+
+excel_file = "dataset_with_attributes.xlsx"
+df.to_excel(excel_file, index=False)
+
+print("Excel file created:", excel_file)
 ```
 
-### 2. CSV to Excel Converter (`csv_to_excel.py`)
-
-This tool converts CSV files to Excel format, which can be useful for data preparation in machine learning workflows.
-
-#### Usage:
-
+Execute the script with:
 ```bash
-python csv_to_excel.py /path/to/data.csv --output /path/to/output.xlsx
+python csv_to_excel.py
 ```
 
-#### Parameters:
+---
 
-- `csv_file`: Path to the input CSV file
-- `--output` or `-o`: Path to the output Excel file (optional, defaults to same name with .xlsx extension)
+## CSV & Excel Format
 
-#### Example:
-
-```bash
-# Convert train_data.csv to Excel format
-python csv_to_excel.py ./data/train_data.csv
-
-# Convert with specific output path
-python csv_to_excel.py ./data/train_data.csv --output ./processed/train_data.xlsx
+### CSV File Format
+The CSV file will have the following structure:
+```
+,,Image Attributes,Speed,Color Pattern,Size,Habitat
+Image_Name,Image_Category,Image_Category_No,Speed,Color_Pattern,Size,Habitat
+cheetah-01.jpg,Cheetah,1,1,0,-1,0
+lion-01.jpg,Lion,3,0,-1,1,-1
+...
 ```
 
-### 3. Image Labeler (`image_labeler.py`)
+### Excel File Format
+The resulting Excel file will have columns:
+| Image_Name     | Image_Category | Image_Category_No | **Image Attributes** | Speed | Color_Pattern | Size | Habitat |
+|----------------|----------------|-------------------|----------------------|-------|---------------|------|---------|
+| cheetah-01.jpg | Cheetah        | 1                 |                      | 1     | 0             | -1   | 0       |
+| lion-01.jpg    | Lion           | 3                 |                      | 0     | -1            | 1    | -1      |
 
-This all-in-one tool helps you create and manage image datasets with custom property labels. It can automatically detect properties using a lightweight CLIP model or allow manual annotation.
+---
 
-#### Usage:
+## Notes
 
-```bash
-# Manual annotation mode
-python image_labeler.py /path/to/images/folder --output output.xlsx --fields field1 field2 field3
-
-# Automatic annotation mode
-python image_labeler.py /path/to/images/folder --output output.xlsx --fields field1 field2 field3 --auto
-```
-
-#### Parameters:
-
-- `folder`: Path to the folder containing images
-- `--output` or `-o`: Path to the output Excel file
-- `--fields` or `-f`: Custom fields to add as columns (e.g., "wears_belt" "has_collar")
-- `--auto` or `-a`: Use AI to automatically detect properties
-- `--update` or `-u`: Update existing sheet instead of creating a new one
-- `--batch` or `-b`: Batch size for processing images (default: 10)
-
-#### Annotation Values:
-
-- **1**: Property exists in the image
-- **-1**: Property doesn't exist in the image
-- **0**: Uncertain or not yet annotated (default for manual mode)
-
-#### Examples:
-
-```bash
-# Create a new annotation sheet for manual labeling
-python image_labeler.py ./dog_photos --output dog_annotations.xlsx --fields wears_belt has_collar color breed
-
-# Automatically analyze images for specific properties
-python image_labeler.py ./dog_photos --output dog_annotations.xlsx --fields wears_belt has_collar --auto
-
-# Update existing annotation sheet with new images
-python image_labeler.py ./new_dog_photos --output dog_annotations.xlsx --update
-
-# Analyze a large dataset with smaller batch size
-python image_labeler.py ./large_image_collection --output annotations.xlsx --fields has_person is_outdoor --auto --batch 5
-```
-
-## Requirements
-
-- Python 3.6 or higher
-- pandas
-- openpyxl
-- Pillow
-- torch
-- transformers
-
-See `requirements.txt` for specific version requirements.
+- **Attribute Values (-1, 0, 1):**
+  - **Speed:** 1 (Fast), 0 (Medium), -1 (Slow)
+  - **Color Pattern:** 1 (Striped), 0 (Spotted), -1 (Plain)
+  - **Size:** 1 (Large), 0 (Medium), -1 (Small)
+  - **Habitat:** 1 (Forests), 0 (Grasslands), -1 (Savannah)
+- Ensure that file paths in the scripts match your local environment.
+- The custom header row in the CSV file places "Image Attributes" above the attribute columns.
